@@ -69,7 +69,7 @@ export function jidStringToObj(jid: string): { _jid: any } {
 
 export async function sendCustomAck(
   node: BinaryNode,
-  sock: any
+  sock: WASocket
 ): Promise<void> {
   const stanza: BinaryNode = {
     tag: "ack",

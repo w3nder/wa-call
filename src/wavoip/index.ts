@@ -1,52 +1,51 @@
-import makeWASocket, { BufferJSON, useMultiFileAuthState, DisconnectReason, BinaryNode, Browsers } from '@whiskeysockets/baileys'
-import {endCall, initialize_wavoip, sendAcceptToWavoip, startCall} from '../wavoip/wavoip_handler'
-const P = require('pino')
-var player_process: any
-var spawn = require('child_process').spawn
+import makeWASocket, {
+  BufferJSON,
+  useMultiFileAuthState,
+  DisconnectReason,
+  BinaryNode,
+  Browsers,
+} from "@whiskeysockets/baileys";
+import {
+  endCall,
+  initialize_wavoip,
+  sendAcceptToWavoip,
+  startCall,
+} from "../wavoip/wavoip_handler";
+import P from "pino";
+import { spawn } from "child_process";
+
+let playerProcess: any;
 
 function startCallw() {
-  var jid: string = "911234567890"
-  startCall(jid)
+  const jid = "911234567890";
+  startCall(jid);
 }
 
 async function connectToWhatsApp() {
-
   const { state, saveCreds } = await useMultiFileAuthState("auth_info_baileys");
 
   const sock = makeWASocket({
     printQRInTerminal: true,
     auth: state,
-	  browser: Browsers.macOS('Desktop'),
-	  logger: P({ level: 'error' }),
+    browser: Browsers.macOS("Desktop"),
+    logger: P({ level: "error" }),
   });
 
   sock.ev.on("creds.update", saveCreds);
 
-  sock.ev.on("call", async (event: any) => {
-    if (event.event == "offer"){
-      setTimeout(sendAcceptToWavoip, 2000)
-    }
-    else if (event.event == "connected"){
-      player_process = spawn("./audio.exe", ["audio", "sound.mp3"])
-      if (!player_process) {
-        console.log("Error spawning audio.exe")
-      }
-      player_process.on('close',function(err:any){ 
-        endCall()
-      })
-    }
-    else if (event.event == "terminated") {
-      if (player_process) player_process.kill()
-    }
-  })
+  sock.ev.on("call", handleCallEvents);
 
   sock.ev.on("connection.update", async (update) => {
-
     const { connection, lastDisconnect } = update;
-    if (connection === "close") {
 
-      const shouldReconnect = true
-      console.log("connection closed due to ", lastDisconnect?.error, ", reconnecting ", shouldReconnect);
+    if (connection === "close") {
+      const shouldReconnect = true;
+      console.log(
+        "Connection closed due to",
+        lastDisconnect?.error,
+        ", reconnecting:",
+        shouldReconnect
+      );
 
       if (shouldReconnect) {
         await connectToWhatsApp();
@@ -54,9 +53,37 @@ async function connectToWhatsApp() {
     }
 
     if (connection === "open") {
-      initialize_wavoip(sock)
+      initialize_wavoip(sock);
+      setTimeout(startCallw, 15000);
     }
-
   });
 }
+
+function handleCallEvents(event: any) {
+  switch (event.event) {
+    case "offer":
+      setTimeout(sendAcceptToWavoip, 2000);
+      break;
+    case "connected":
+      playerProcess = spawn("./audio.exe", ["audio", "sound.mp3"]);
+
+      if (!playerProcess) {
+        console.error("Error spawning audio.exe");
+        return;
+      }
+
+      playerProcess.on("close", (err: any) => {
+        endCall();
+      });
+      break;
+    case "terminated":
+      if (playerProcess) {
+        playerProcess.kill();
+      }
+      break;
+    default:
+      console.log("Unknown call event:", event);
+  }
+}
+
 connectToWhatsApp();
