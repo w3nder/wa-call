@@ -5,7 +5,7 @@
   "scripts": {
     "build": "tsc && npm run copy-files",
     "start": "tsx ./src/index.ts",
-    "copy-files": "cpx 'src/wavoip/*.node' dist/wavoip/"
+    "copy-files": "cpx 'src/wavoip/*.node' dist/"
   },
   "keywords": [],
   "author": "",
