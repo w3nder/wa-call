@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
-    "start": "tsx ./src/index.ts"
+    "build": "tsc && npm run copy-files",
+    "start": "tsx ./src/index.ts",
+    "copy-files": "cpx 'src/wavoip/*.node' dist/wavoip/"
   },
   "keywords": [],
   "author": "",
