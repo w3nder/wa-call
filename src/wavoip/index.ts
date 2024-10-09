@@ -17,7 +17,7 @@ import { spawn } from "child_process";
 let playerProcess: any;
 
 function startCallw() {
-  const jid = "911234567890";
+  const jid = "556484338175";
   startCall(jid);
 }
 
