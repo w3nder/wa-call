@@ -368,7 +368,7 @@ async function objectToBinaryNode(obj: any, waSocket: WASocket): Promise<BinaryN
           new Uint8Array(obj[2][0][2]),
           [node.attrs.jid],
           waSocket
-        ),
+        ) as BinaryNode
       ];
     } else if (obj[2][0] instanceof Array) {
       node.content = [];

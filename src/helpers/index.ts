@@ -34,20 +34,26 @@ export type AttrsFormat = {
 export async function encmsg(
   buffer: Uint8Array,
   jids: string[],
-  waSocket: any
-): Promise<BinaryNode> {
-  const msg: proto.IMessage = {
-    call: {
-      callKey: buffer,
-    },
-    messageContextInfo: {},
-  };
-
-  console.log(jids);
-  await waSocket.assertSessions(jids, false);
-  const patched = await waSocket.createParticipantNodes(jids, msg);
-
-  return patched.nodes[0].content[0];
+  waSocket: WASocket
+): Promise<string | number | BinaryNode> {
+  try {
+    const msg: proto.IMessage = {
+      call: {
+        callKey: buffer,
+      },
+      messageContextInfo: {},
+    };
+  
+    console.log(jids);
+    await waSocket.assertSessions(jids, false);
+    const patched = await waSocket.createParticipantNodes(jids, msg);
+  
+    return patched.nodes![0].content![0];
+  } catch (error) {
+    console.log("decoding error");
+    console.error(error);
+    return -1;
+  }
 }
 
 export function jidStringToObj(jid: string): { _jid: any } {
