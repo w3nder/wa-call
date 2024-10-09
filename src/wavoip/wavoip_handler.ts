@@ -1,3 +1,4 @@
+
 var wavoip = require("./wavoip.node");
 
 import {
@@ -19,20 +20,19 @@ import {
 } from "../helpers";
 import { call_event } from "../interfaces";
 
-var baileys_state: WASocket;
 
 function LoggingCallback() {
   //console.log(arguments)
 }
 
-function EventCallback(event_code: number, t: any, r: any) {
+function EventCallback(event_code: number, t: any, r: any, waSocket: WASocket) {
   if (event_code == 14) {
     const event: any = {
       event: "connected",
       from: r.peer_raw_jid,
       type: "audio",
     };
-    baileys_state.ev.emit("call", event);
+    waSocket.ev.emit("call", event);
   } else if (event_code == 46) {
     endCall();
   }
@@ -42,14 +42,14 @@ export function endCall() {
   wavoip.end(true, "");
 }
 
-function XmppCallback(call_id: any, from: any, node: any) {
+function XmppCallback(call_id: any, from: any, node: any, waSocket: WASocket) {
   switch (node[0]) {
     case "relaylatency":
     case "preaccept":
     case "accept":
     case "transport":
     case "terminate":
-      handleEventfromWavoip(call_id, from, node);
+      handleEventfromWavoip(call_id, from, node, waSocket);
       if (node[0] == "terminate" && node[2]) {
         var event: any = {
           event: "terminated",
@@ -58,11 +58,11 @@ function XmppCallback(call_id: any, from: any, node: any) {
         };
 
         
-        baileys_state.ev.emit("call", event);
+        waSocket.ev.emit("call", event);
       }
       break;
     case "offer":
-      sendOffer(call_id, from, node);
+      sendOffer(call_id, from, node, waSocket);
       break;
   }
 }
@@ -70,41 +70,42 @@ function XmppCallback(call_id: any, from: any, node: any) {
 async function handleEventfromWavoip(
   call_id: string,
   peer_jid: string,
-  obj: any
+  obj: any, 
+  waSocket: WASocket
 ) {
   var node: BinaryNode = {
     tag: "call",
     attrs: {
       to: peer_jid,
-      id: baileys_state.generateMessageTag(),
+      id: waSocket.generateMessageTag(),
     },
   };
-  node.content = [await objectToBinaryNode(obj)];
-  baileys_state.sendNode(node);
+  node.content = [await objectToBinaryNode(obj, waSocket)];
+  waSocket.sendNode(node);
 }
 
-async function sendOffer(call_id: string, peer_jid: string, obj: any) {
-  var node: BinaryNode = await objectToBinaryNode(obj);
+async function sendOffer(call_id: string, peer_jid: string, obj: any, waSocket: WASocket) {
+  var node: BinaryNode = await objectToBinaryNode(obj, waSocket);
   if (node.content instanceof Array) {
     node.content.push({
       tag: "device-identity",
       attrs: {},
-      content: encodeSignedDeviceIdentity(baileys_state.authState.creds.account!, true),
+      content: encodeSignedDeviceIdentity(waSocket.authState.creds.account!, true),
     });
   }
   var fnode: BinaryNode = {
     tag: "call",
     attrs: {
-      id: baileys_state.generateMessageTag(),
+      id: waSocket.generateMessageTag(),
       to: peer_jid,
     },
     content: [node],
   };
-  baileys_state.sendNode(fnode);
+  waSocket.sendNode(fnode);
 }
 
-function handleEventfromSocket(node: BinaryNode) {
-  sendCustomAck(node, baileys_state);
+function handleEventfromSocket(node: BinaryNode, waSocket: WASocket) {
+  sendCustomAck(node, waSocket);
 
   var wavoip_obj: any = {
     elapsed_msec: undefined,
@@ -123,8 +124,8 @@ function handleEventfromSocket(node: BinaryNode) {
   console.dir(wavoip_obj, { depth: null, colors: true });
 }
 
-function sendReceipt(node: BinaryNode) {
-  const userJid = baileys_state.authState.creds.me!.id.split(":")[0] + "@s.whatsapp.net";
+function sendReceipt(node: BinaryNode, waSocket: WASocket) {
+  const userJid = waSocket.authState.creds.me!.id.split(":")[0] + "@s.whatsapp.net";
   var recepit_node: BinaryNode = {
     tag: "receipt",
     attrs: {
@@ -142,7 +143,7 @@ function sendReceipt(node: BinaryNode) {
       },
     ],
   };
-  baileys_state.sendNode(recepit_node);
+  waSocket.sendNode(recepit_node);
 
   var event: any = {
     event: "offer",
@@ -156,12 +157,12 @@ function sendReceipt(node: BinaryNode) {
   ) {
     event.type = "video";
   }
-  baileys_state.ev.emit("call", event);
+  waSocket.ev.emit("call", event);
 }
 
-async function handleOffer(node: BinaryNode) {
+async function handleOffer(node: BinaryNode, waSocket: WASocket) {
   console.log("Oer Receivedff");
-  sendReceipt(node);
+  sendReceipt(node, waSocket);
   var call_info = {
     "call-creator": {
       _jid: {
@@ -185,7 +186,7 @@ async function handleOffer(node: BinaryNode) {
         t.content = await decodePkmsg(
           node.attrs.from,
           t.content as Uint8Array,
-          baileys_state,
+          waSocket,
           t.attrs.type
         );
       }
@@ -242,9 +243,8 @@ async function handleOffer(node: BinaryNode) {
   });
 }
 
-export function initialize_wavoip(sock: WASocket) {
-  baileys_state = sock;
-  var jid = sock.user?.id;
+export function initialize_wavoip(waSocket: WASocket) {
+  var jid = waSocket.user?.id;
   wavoip.init(jid, true, true, true, false);
 
   wavoip.registerAVDeviceChangedCallback(function () {});
@@ -273,11 +273,11 @@ export function initialize_wavoip(sock: WASocket) {
   wavoip.setScreenSize(1920, 1080);
   wavoip.updateAudioVideoSwitch(true);
 
-  sock.ws.on(`CB:call`, (node: BinaryNode) => {
-    handle_call(node);
+  waSocket.ws.on(`CB:call`, (node: BinaryNode) => {
+    handle_call(node, waSocket);
   });
 
-  sock.ws.on(`CB:ack,class:call`, (node: BinaryNode) => {
+  waSocket.ws.on(`CB:ack,class:call`, (node: BinaryNode) => {
     handleAckfromSocket(node);
   });
 
@@ -288,24 +288,24 @@ export function sendAcceptToWavoip() {
   wavoip.acceptCall(true, true);
 }
 
-export function handle_call(node: BinaryNode) {
+export function handle_call(node: BinaryNode, waSocket: WASocket) {
   if (!(node.content && typeof node.content[0] == "object")) {
     return;
   }
 
   switch (node.content[0].tag) {
     case "offer":
-      handleOffer(node);
+      handleOffer(node, waSocket);
       break;
     case "relaylatency":
     case "transport":
     case "terminate":
     case "preaccept":
     case "accept":
-      handleEventfromSocket(node);
+      handleEventfromSocket(node, waSocket);
       break;
     case "receipt":
-      sendCustomAck(node, baileys_state);
+      sendCustomAck(node, waSocket);
       break;
   }
 }
@@ -354,7 +354,7 @@ function format_attrs(attrs: any): AttrsFormat {
   return attrs;
 }
 
-async function objectToBinaryNode(obj: any): Promise<BinaryNode> {
+async function objectToBinaryNode(obj: any, waSocket: WASocket): Promise<BinaryNode> {
   var node: BinaryNode = {
     tag: obj[0],
     attrs: obj[1] ? format_attrs(obj[1]) : {},
@@ -367,7 +367,7 @@ async function objectToBinaryNode(obj: any): Promise<BinaryNode> {
         await encmsg(
           new Uint8Array(obj[2][0][2]),
           [node.attrs.jid],
-          baileys_state
+          waSocket
         ),
       ];
     } else if (obj[2][0] instanceof Array) {
@@ -379,7 +379,7 @@ async function objectToBinaryNode(obj: any): Promise<BinaryNode> {
 
       for (var con of obj[2]) {
         if (con[0] == "to" && con[1].jid.device == 26) continue;
-        node.content.push(await objectToBinaryNode(con));
+        node.content.push(await objectToBinaryNode(con, waSocket));
       }
     } else {
       node.content = new Uint8Array(obj[2]);
