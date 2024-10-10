@@ -353,14 +353,17 @@ export class WavoipManager {
   
     console.log(devices);
   
-    if (!devices) return;
+    if (!devices || devices.length === 0) return;
   
+    // Inicializa um array vazio para armazenar os dispositivos
     const deviceList: string[] = [];
   
+    // Loop tradicional para montar a lista de dispositivos no formato correto
     for (let i = 0; i < devices.length; i++) {
-      deviceList.push(`${jid}:${devices[i].device}@s.whatsapp.net`);
+      deviceList.push(`${devices[i].user}:${devices[i].device}@s.whatsapp.net`);
     }
   
+    // Chama o método wavoip.startMD com a lista de dispositivos
     wavoip.startMD(
       `${jid}@s.whatsapp.net`,
       deviceList,
@@ -368,5 +371,7 @@ export class WavoipManager {
       false
     );
   }
+  
+  
   
 }
