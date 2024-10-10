@@ -74,6 +74,7 @@ export class WavoipManager {
       case "relaylatency":
       case "preaccept":
       case "accept":
+        this.sendAcceptToWavoip();
       case "transport":
       case "terminate":
         this.handleEventFromWavoip(call_id, from, node);
