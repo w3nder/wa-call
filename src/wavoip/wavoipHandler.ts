@@ -346,18 +346,25 @@ export class WavoipManager {
     wavoip.acceptCall(true, true);
   }
 
-  startCall(jid: string) {
-    var call_id = generateMessageID() + generateMessageID();
-    wavoip.startMD(
-      jid + "@s.whatsapp.net",
-      [
-        jid + ".0:24@s.whatsapp.net",
-        jid + ".0:26@s.whatsapp.net",
-        jid + ".0:27@s.whatsapp.net",
-        jid + ".0:0@s.whatsapp.net",
-      ],
-      call_id,
-      false
-    );
+  async startCall(jid: string) {
+    const call_id = generateMessageID() + generateMessageID();
+    const devices = await  this.waSocket.getUSyncDevices([jid], false, false);
+
+    console.log(devices);
+
+    if(!devices) return;
+
+
+    // wavoip.startMD(
+    //   jid + "@s.whatsapp.net",
+    //   [
+    //     jid + ".0:24@s.whatsapp.net",
+    //     jid + ".0:26@s.whatsapp.net",
+    //     jid + ".0:27@s.whatsapp.net",
+    //     jid + ".0:0@s.whatsapp.net",
+    //   ],
+    //   call_id,
+    //   false
+    // );
   }
 }

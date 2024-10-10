@@ -24,7 +24,7 @@ async function connectToWhatsApp() {
     logger: P({ level: "error" }),
   });
 
-  wavoipManager = new WavoipManager(sock);
+
 
   sock.ev.on("creds.update", saveCreds);
 
@@ -48,6 +48,7 @@ async function connectToWhatsApp() {
     }
 
     if (connection === "open") {
+      wavoipManager = new WavoipManager(sock);
       wavoipManager.initialize();
       setTimeout(startCallw, 15000); 
     }
