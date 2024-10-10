@@ -6,6 +6,7 @@ import {
   encodeSignedDeviceIdentity,
   FullJid,
   generateMessageID,
+  generateMessageIDV2,
   isJidUser,
   jidEncode,
   WACallEvent,
@@ -74,7 +75,6 @@ export class WavoipManager {
       case "relaylatency":
       case "preaccept":
       case "accept":
-        this.sendAcceptToWavoip();
       case "transport":
       case "terminate":
         this.handleEventFromWavoip(call_id, from, node);
@@ -348,30 +348,25 @@ export class WavoipManager {
   }
 
   async startCall(jid: string) {
-    const call_id = generateMessageID() + generateMessageID();
-    const devices = await this.waSocket.getUSyncDevices([jid], false, false);
-  
+    const call_id = generateMessageIDV2();
+    const devices = await this.waSocket.getUSyncDevices([jid], false,false);
+    
     console.log(devices);
-  
+    
     if (!devices || devices.length === 0) return;
-  
-    // Inicializa um array vazio para armazenar os dispositivos
     const deviceList: string[] = [];
-  
-    // Loop tradicional para montar a lista de dispositivos no formato correto
     for (let i = 0; i < devices.length; i++) {
-      deviceList.push(`${devices[i].user}:${devices[i].device}`);
+      const device = devices[i];
+      deviceList.push(`${device.user}:${device.device}@s.whatsapp.net`);
     }
   
-    // Chama o método wavoip.startMD com a lista de dispositivos
     wavoip.startMD(
-      `${jid}@s.whatsapp.net`,
+      jid,  
       deviceList,
       call_id,
       false
     );
   }
-  
   
   
 }
