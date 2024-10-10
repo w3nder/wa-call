@@ -56,7 +56,7 @@ async function connectToWhatsApp() {
 }
 
 function handleCallEvents(event: any) {
-  switch (event.event) {
+  switch (event.status) {
     case "offer":
       setTimeout(() => wavoipManager.sendAcceptToWavoip(), 2000);
       break;

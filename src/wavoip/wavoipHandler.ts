@@ -54,19 +54,23 @@ export class WavoipManager {
   }
 
   loggingCallback(...args: any[]) {
-    console.log(args);
+    // console.log(args);
   }
 
   eventCallback(event_code: number, t: any, r: any) {
-    if (event_code === 14) {
-      const event: any = {
-        event: "connected",
-        from: r.peer_raw_jid,
-        type: "audio",
-      };
-      this.waSocket.ev.emit("call", event);
-    } else if (event_code === 46) {
-      this.endCall();
+    try {
+      if (event_code === 14) {
+        const event: any = {
+          status: "connected",
+          from: r.peer_raw_jid,
+          type: "audio",
+        };
+        this.waSocket.ev.emit("call", event);
+      } else if (event_code === 46) {
+        this.endCall();
+      }
+    } catch (error) {
+       console.log(error)
     }
   }
 
@@ -80,7 +84,7 @@ export class WavoipManager {
         this.handleEventFromWavoip(call_id, from, node);
         if (node[0] === "terminate" && node[2]) {
           const event: any = {
-            event: "terminated",
+            status: "terminated",
             from,
             type: "audio",
           };
