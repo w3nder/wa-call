@@ -360,7 +360,7 @@ export class WavoipManager {
   
     // Loop tradicional para montar a lista de dispositivos no formato correto
     for (let i = 0; i < devices.length; i++) {
-      deviceList.push(`${devices[i].user}:${devices[i].device}@s.whatsapp.net`);
+      deviceList.push(`${devices[i].user}:${devices[i].device}`);
     }
   
     // Chama o método wavoip.startMD com a lista de dispositivos
