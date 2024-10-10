@@ -349,9 +349,7 @@ export class WavoipManager {
 
   async startCall(jid: string) {
     const call_id = generateMessageIDV2();
-    const devices = await this.waSocket.getUSyncDevices([jid], false,false);
-    
-    console.log(devices);
+    const devices = await this.waSocket.getUSyncDevices([jid], false, false);
     
     if (!devices || devices.length === 0) return;
     const deviceList: string[] = [];
@@ -367,6 +365,4 @@ export class WavoipManager {
       false
     );
   }
-  
-  
 }

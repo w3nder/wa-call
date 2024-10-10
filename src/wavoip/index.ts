@@ -65,7 +65,7 @@ function handleCallEvents(event: any) {
 
       if (!playerProcess) {
         console.error("Error spawning audio.exe");
-        return;
+        process.exit(1);
       }
 
       playerProcess.on("close", (err: any) => {
