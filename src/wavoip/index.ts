@@ -10,7 +10,7 @@ let playerProcess: any;
 let wavoipManager: WavoipManager; 
 
 function startCallw() {
-  const jid = "556484338175";
+  const jid = "556484338175@s.whatsapp.net";
   wavoipManager.startCall(jid);
 }
 

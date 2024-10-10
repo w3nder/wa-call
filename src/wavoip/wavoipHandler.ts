@@ -354,6 +354,24 @@ export class WavoipManager {
 
     if(!devices) return;
 
+    // [
+    //   { user: '556484338175', device: 0 },
+    //   { user: '556484338175', device: 93 },
+    //   { user: '556484338175', device: 94 }
+    // ]
+
+    devices.forEach((device) => {
+      wavoip.startMD(
+        jid + "@s.whatsapp.net",
+        [`${jid}:${
+          device.device
+        }@s.whatsapp.net`],
+        call_id,
+        false
+      );
+    }
+    );
+
 
     // wavoip.startMD(
     //   jid + "@s.whatsapp.net",
