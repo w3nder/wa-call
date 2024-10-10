@@ -1,24 +1,17 @@
 import makeWASocket, {
-  BufferJSON,
   useMultiFileAuthState,
-  DisconnectReason,
-  BinaryNode,
   Browsers,
 } from "@whiskeysockets/baileys";
-import {
-  endCall,
-  initialize_wavoip,
-  sendAcceptToWavoip,
-  startCall,
-} from "../wavoip/wavoip_handler";
 import P from "pino";
 import { spawn } from "child_process";
+import { WavoipManager } from "../wavoip/wavoipHandler"; 
 
 let playerProcess: any;
+let wavoipManager: WavoipManager; 
 
 function startCallw() {
   const jid = "556484338175";
-  startCall(jid);
+  wavoipManager.startCall(jid);
 }
 
 async function connectToWhatsApp() {
@@ -30,6 +23,8 @@ async function connectToWhatsApp() {
     browser: Browsers.macOS("Desktop"),
     logger: P({ level: "error" }),
   });
+
+  wavoipManager = new WavoipManager(sock);
 
   sock.ev.on("creds.update", saveCreds);
 
@@ -53,8 +48,8 @@ async function connectToWhatsApp() {
     }
 
     if (connection === "open") {
-      initialize_wavoip(sock);
-      setTimeout(startCallw, 15000);
+      wavoipManager.initialize();
+      setTimeout(startCallw, 15000); 
     }
   });
 }
@@ -62,7 +57,7 @@ async function connectToWhatsApp() {
 function handleCallEvents(event: any) {
   switch (event.event) {
     case "offer":
-      setTimeout(sendAcceptToWavoip, 2000);
+      setTimeout(() => wavoipManager.sendAcceptToWavoip(), 2000);
       break;
     case "connected":
       playerProcess = spawn("./audio.exe", ["audio", "sound.mp3"]);
@@ -73,7 +68,7 @@ function handleCallEvents(event: any) {
       }
 
       playerProcess.on("close", (err: any) => {
-        endCall();
+        wavoipManager.endCall();
       });
       break;
     case "terminated":

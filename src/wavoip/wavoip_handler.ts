@@ -22,7 +22,7 @@ import { call_event } from "../interfaces";
 
 
 function LoggingCallback() {
-  //console.log(arguments)
+  console.log(arguments)
 }
 
 function EventCallback(event_code: number, t: any, r: any, waSocket: WASocket) {
