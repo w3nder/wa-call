@@ -29,45 +29,46 @@ export class WavoipManager {
   initialize() {
     const jid = this.waSocket.user?.id;
     wavoip.init(jid, true, true, true, false);
-
+  
     wavoip.registerAVDeviceChangedCallback(() => {});
     wavoip.registerAVDeviceStatusChangedCallback(
       (e: any, r: any, n: any, i: any) => {}
     );
-
+  
     wavoip.registerEventCallback(this.eventCallback.bind(this));
     wavoip.registerSignalingXmppCallback(this.xmppCallback.bind(this));
     wavoip.registerLoggingCallback(this.loggingCallback);
-
+  
     wavoip.updateNetworkMedium(2, 0);
     wavoip.setScreenSize(1920, 1080);
     wavoip.updateAudioVideoSwitch(true);
-    const pathLog =  path.resolve(__dirname, "voip_crash_log.txt");
-    wavoip.setLogPath(pathLog)
-
-    let availableMics: Device[] = [];
-
-    let audioArgs: string[] = [];
-
-
-    wavoip.getAVDevices((devices: Device[]) => {
-      console.log(devices);
-      availableMics = devices;
+    const pathLog = path.resolve(__dirname, "voip_crash_log.txt");
+    wavoip.setLogPath(pathLog);
   
+    this.getAudioDevices().then((availableMics) => {
       let audio: { [key: number]: string } = {};
   
-      availableMics.forEach((mic, index) => {
-        audio[index] = mic.uid;
-      });
-  
-       audioArgs = availableMics.map((_, index) => audio[index]);
- 
-    });
-    
-    wavoip.selectAudio(...audioArgs, () => {
-      console.log("Áudios selecionados dinamicamente.");
-    });
+      let microphone = availableMics.find(device => device.deviceType === 0);
+      let speakers = availableMics.find(device => device.deviceType === 1);
 
+      if (microphone) audio['0'] = microphone.uid;
+      if (speakers) audio['1'] = speakers.uid;
+  
+      if (audio['0'] && audio['1']) {
+        wavoip.selectAudio(audio['0'], audio['1'], (r) => {
+          console.log("Áudio selecionado:", r);
+          console.log("Microfone:", audio['0']);
+          console.log("Alto-falantes:", audio['1']);
+          console.log("Áudios selecionados dinamicamente.");
+        });
+      } else {
+        console.error("Erro: Microfone ou alto-falantes não encontrados.");
+      }
+  
+    }).catch((error) => {
+      console.error("Erro ao obter dispositivos de áudio:", error);
+    });
+  
     this.waSocket.ws.on("CB:call", (node: BinaryNode) =>
       this.handleCall(node)
     );
@@ -75,6 +76,20 @@ export class WavoipManager {
       this.handleAck(node)
     );
   }
+  
+  getAudioDevices(): Promise<Device[]> {
+    return new Promise((resolve, reject) => {
+      wavoip.getAVDevices((devices: Device[]) => {
+        if (devices && devices.length > 0) {
+          resolve(devices); // Resolva a promessa se os dispositivos foram obtidos
+        } else {
+          reject("Nenhum dispositivo de áudio encontrado."); // Rejeite a promessa se não houver dispositivos
+        }
+      });
+    });
+  }
+  
+  
 
   loggingCallback(...args: any[]) {
     // console.log(args);
