@@ -4,12 +4,9 @@ var wavoip = require("./wavoip.node");
 import {
   BinaryNode,
   encodeSignedDeviceIdentity,
-  FullJid,
-  generateMessageID,
   generateMessageIDV2,
   isJidUser,
   jidEncode,
-  WACallEvent,
   WASocket,
 } from "@whiskeysockets/baileys";
 import {
@@ -20,6 +17,7 @@ import {
   sendCustomAck,
 } from "../helpers";
 import path from "path";
+import { Device } from "../interfaces";
 
 export class WavoipManager {
   private waSocket: WASocket;
@@ -41,35 +39,21 @@ export class WavoipManager {
     wavoip.registerSignalingXmppCallback(this.xmppCallback.bind(this));
     wavoip.registerLoggingCallback(this.loggingCallback);
 
-    // Configurações adicionais
     wavoip.updateNetworkMedium(2, 0);
     wavoip.setScreenSize(1920, 1080);
     wavoip.updateAudioVideoSwitch(true);
-
-    //wavoip.selectCamera('\\\\?\\USB#VID_0BDA&PID_579C&MI_00#6&d4d66ce&0&0000#{e5323777-f976-4f5b-9b55-b94699c46e44}\\GLOBAL')
- 
-
     const pathLog =  path.resolve(__dirname, "voip_crash_log.txt");
     wavoip.setLogPath(pathLog)
 
- 
+    let availableMics: Device[] = [];
+
     wavoip.getAVDevices((devices: Device[]) => {
       console.log(devices);
+      availableMics = devices;
     });
 
-    var availableMics = [
-      {
-        name: 'Microfone (WO Mic Device)',
-        uid: '\\\\?\\SWD#MMDEVAPI#{0.0.1.00000000}.{1ff6e25a-5b04-463f-ac14-a54cd7e59f21}#{2eef81be-33fa-4800-9670-1cd474972c3f}',
-        connected: true,
-        deviceType: 0,
-        isDefault: 1,
-        isSelected: 1
-      }
-    ];
-    
-    // Construção da var audio baseada nos availableMics
-    var audio = {};
+
+    let audio = {};
     
     availableMics.forEach((mic, index) => {
       audio[index] = mic.uid;
@@ -97,7 +81,6 @@ export class WavoipManager {
           from: r.peer_raw_jid,
           type: "audio",
         };
-        // this.waSocket.ev.emit("call", event);
       } else if (event_code === 46) {
         this.endCall();
       }
@@ -120,7 +103,6 @@ export class WavoipManager {
             from,
             type: "audio",
           };
-          // this.waSocket.ev.emit("call", event);
         }
         break;
       case "offer":

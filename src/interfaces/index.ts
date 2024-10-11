@@ -3,3 +3,8 @@ export type call_event = {
   from: string;
   type: "audio" | "video";
 };
+
+export interface Device {
+  deviceType: number;
+  uid: string;
+}
