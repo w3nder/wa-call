@@ -1,6 +1,8 @@
+import path from "path";
 import makeWASocket, {
   useMultiFileAuthState,
   Browsers,
+  WACallEvent,
 } from "@whiskeysockets/baileys";
 import P from "pino";
 import { spawn } from "child_process";
@@ -23,8 +25,6 @@ async function connectToWhatsApp() {
     browser: Browsers.macOS("Desktop"),
     logger: P({ level: "error" }),
   });
-
-
 
   sock.ev.on("creds.update", saveCreds);
 
@@ -55,24 +55,30 @@ async function connectToWhatsApp() {
   });
 }
 
-function handleCallEvents(event: any) {
-  switch (event.status) {
+function handleCallEvents(event: WACallEvent[]) {
+  const eventCall = event[0];
+  switch (eventCall.status) {
     case "offer":
       setTimeout(() => wavoipManager.sendAcceptToWavoip(), 2000);
       break;
-    case "connected":
-      playerProcess = spawn("./audio.exe", ["audio", "sound.mp3"]);
+    case "accept":
+      const audioExecutablePath = path.resolve(__dirname, "audio.exe");
+      const soundFilePath = path.resolve(__dirname, "sound.mp3");
+
+      playerProcess = spawn(audioExecutablePath, ["audio", soundFilePath]);
 
       if (!playerProcess) {
         console.error("Error spawning audio.exe");
         process.exit(1);
       }
 
+      console.log("Playing ringing sound");
+
       playerProcess.on("close", (err: any) => {
         wavoipManager.endCall();
       });
       break;
-    case "terminated":
+    case "terminate":
       if (playerProcess) {
         playerProcess.kill();
       }

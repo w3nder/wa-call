@@ -65,7 +65,7 @@ export class WavoipManager {
           from: r.peer_raw_jid,
           type: "audio",
         };
-        this.waSocket.ev.emit("call", event);
+        // this.waSocket.ev.emit("call", event);
       } else if (event_code === 46) {
         this.endCall();
       }
@@ -88,7 +88,7 @@ export class WavoipManager {
             from,
             type: "audio",
           };
-          this.waSocket.ev.emit("call", event);
+          // this.waSocket.ev.emit("call", event);
         }
         break;
       case "offer":
