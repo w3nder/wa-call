@@ -50,7 +50,7 @@ async function connectToWhatsApp() {
     if (connection === "open") {
       wavoipManager = new WavoipManager(sock);
       wavoipManager.initialize();
-      setTimeout(startCallw, 15000); 
+      startCallw();
     }
   });
 }
@@ -82,6 +82,10 @@ function handleCallEvents(event: WACallEvent[]) {
       if (playerProcess) {
         playerProcess.kill();
       }
+      break;
+
+    case "ringing":
+      console.log("Ringing");
       break;
     default:
       console.log("Unknown call event:", event);

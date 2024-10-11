@@ -44,14 +44,10 @@ export async function encmsg(
       messageContextInfo: {},
     };
   
-    console.log(jids);
     await waSocket.assertSessions(jids, false);
     const patched = await waSocket.createParticipantNodes(jids, msg);
-    console.log(patched.nodes![0].content![0])
     return patched.nodes![0].content![0];
   } catch (error) {
-    console.log("decoding error");
-    console.error(error);
     return -1;
   }
 }

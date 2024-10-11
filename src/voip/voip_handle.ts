@@ -3,6 +3,7 @@ var wavoip = require("./wavoip.node");
 
 import {
   BinaryNode,
+  delay,
   encodeSignedDeviceIdentity,
   generateMessageIDV2,
   isJidUser,
@@ -26,7 +27,7 @@ export class WavoipManager {
     this.waSocket = waSocket;
   }
 
-  initialize() {
+  async initialize() {
     const jid = this.waSocket.user?.id;
     wavoip.init(jid, true, true, true, false);
   
@@ -42,8 +43,7 @@ export class WavoipManager {
     wavoip.updateNetworkMedium(2, 0);
     wavoip.setScreenSize(1920, 1080);
     wavoip.updateAudioVideoSwitch(true);
-    const pathLog = path.resolve(__dirname, "voip_crash_log.txt");
-    wavoip.setLogPath(pathLog);
+
   
     this.getAudioDevices().then((availableMics) => {
       let audio: { [key: number]: string } = {};
@@ -55,6 +55,8 @@ export class WavoipManager {
       if (speakers) audio['1'] = speakers.uid;
   
       if (audio['0'] && audio['1']) {
+
+        console.log(audio['0'], audio['1'])
         wavoip.selectAudio(audio['0'], audio['1'], (r) => {
           console.log("Áudio selecionado:", r);
           console.log("Microfone:", audio['0']);
@@ -68,6 +70,12 @@ export class WavoipManager {
     }).catch((error) => {
       console.error("Erro ao obter dispositivos de áudio:", error);
     });
+
+
+    await delay(2000);
+
+    const pathLog = path.resolve(__dirname, "voip_crash_log.txt");
+    wavoip.setLogPath(pathLog);
   
     this.waSocket.ws.on("CB:call", (node: BinaryNode) =>
       this.handleCall(node)
@@ -81,6 +89,7 @@ export class WavoipManager {
     return new Promise((resolve, reject) => {
       wavoip.getAVDevices((devices: Device[]) => {
         if (devices && devices.length > 0) {
+          console.log("Dispositivos de áudio encontrados:", devices);
           resolve(devices);
         } else {
           reject("Nenhum dispositivo de áudio encontrado.");
@@ -89,8 +98,6 @@ export class WavoipManager {
     });
   }
   
-  
-
   loggingCallback(...args: any[]) {
     // console.log(args);
   }
