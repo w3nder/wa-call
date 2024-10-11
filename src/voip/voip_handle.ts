@@ -47,19 +47,26 @@ export class WavoipManager {
 
     let availableMics: Device[] = [];
 
+    let audioArgs: string[] = [];
+
+
     wavoip.getAVDevices((devices: Device[]) => {
       console.log(devices);
       availableMics = devices;
+  
+      let audio: { [key: number]: string } = {};
+  
+      availableMics.forEach((mic, index) => {
+        audio[index] = mic.uid;
+      });
+  
+       audioArgs = availableMics.map((_, index) => audio[index]);
+ 
     });
-
-
-    let audio = {};
     
-    availableMics.forEach((mic, index) => {
-      audio[index] = mic.uid;
+    wavoip.selectAudio(...audioArgs, () => {
+      console.log("Áudios selecionados dinamicamente.");
     });
-    wavoip.selectAudio(audio['0'],audio['1'], function (){})
-    
 
     this.waSocket.ws.on("CB:call", (node: BinaryNode) =>
       this.handleCall(node)
