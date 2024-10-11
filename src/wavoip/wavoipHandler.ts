@@ -19,6 +19,7 @@ import {
   jidStringToObj,
   sendCustomAck,
 } from "../helpers";
+import path from "path";
 
 export class WavoipManager {
   private waSocket: WASocket;
@@ -45,27 +46,35 @@ export class WavoipManager {
     wavoip.setScreenSize(1920, 1080);
     wavoip.updateAudioVideoSwitch(true);
 
-    // Available mics:  [
-    //   {
-    //     name: 'Microfone (WO Mic Device)',
-    //     uid: '\\\\?\\SWD#MMDEVAPI#{0.0.1.00000000}.{1ff6e25a-5b04-463f-ac14-a54cd7e59f21}#{2eef81be-33fa-4800-9670-1cd474972c3f}',
-    //     connected: true,
-    //     deviceType: 0,
-    //     isDefault: 1,
-    //     isSelected: 1
-    //   }
-    // ]
-    // ---------------------------------
-    // Available speakers:  [
-    //   {
-    //     name: 'Alto-falantes (Realtek(R) Audio)',
-    //     uid: '\\\\?\\SWD#MMDEVAPI#{0.0.0.00000000}.{7ee26d10-0fa4-4b71-b3fe-1fec0004a32f}#{e6327cad-dcec-4949-ae8a-991e976a79d2}',
-    //     connected: true,
-    //     deviceType: 1,
-    //     isDefault: 1,
-    //     isSelected: 1
-    //   }
-    // ]
+    //wavoip.selectCamera('\\\\?\\USB#VID_0BDA&PID_579C&MI_00#6&d4d66ce&0&0000#{e5323777-f976-4f5b-9b55-b94699c46e44}\\GLOBAL')
+ 
+
+    const pathLog =  path.resolve(__dirname, "voip_crash_log.txt");
+    wavoip.setLogPath(pathLog)
+
+ 
+    wavoip.getAVDevices((devices: Device[]) => {
+      console.log(devices);
+    });
+
+    var availableMics = [
+      {
+        name: 'Microfone (WO Mic Device)',
+        uid: '\\\\?\\SWD#MMDEVAPI#{0.0.1.00000000}.{1ff6e25a-5b04-463f-ac14-a54cd7e59f21}#{2eef81be-33fa-4800-9670-1cd474972c3f}',
+        connected: true,
+        deviceType: 0,
+        isDefault: 1,
+        isSelected: 1
+      }
+    ];
+    
+    // Construção da var audio baseada nos availableMics
+    var audio = {};
+    
+    availableMics.forEach((mic, index) => {
+      audio[index] = mic.uid;
+    });
+    wavoip.selectAudio(audio['0'],audio['1'], function (){})
     
 
     this.waSocket.ws.on("CB:call", (node: BinaryNode) =>
