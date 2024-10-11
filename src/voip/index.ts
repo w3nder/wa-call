@@ -6,7 +6,7 @@ import makeWASocket, {
 } from "@whiskeysockets/baileys";
 import P from "pino";
 import { spawn } from "child_process";
-import { WavoipManager } from "../wavoip/wavoipHandler"; 
+import { WavoipManager } from "./voip_handle"; 
 
 let playerProcess: any;
 let wavoipManager: WavoipManager; 
