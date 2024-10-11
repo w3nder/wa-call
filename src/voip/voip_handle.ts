@@ -81,9 +81,9 @@ export class WavoipManager {
     return new Promise((resolve, reject) => {
       wavoip.getAVDevices((devices: Device[]) => {
         if (devices && devices.length > 0) {
-          resolve(devices); // Resolva a promessa se os dispositivos foram obtidos
+          resolve(devices);
         } else {
-          reject("Nenhum dispositivo de áudio encontrado."); // Rejeite a promessa se não houver dispositivos
+          reject("Nenhum dispositivo de áudio encontrado.");
         }
       });
     });
