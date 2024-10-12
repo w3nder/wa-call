@@ -13,6 +13,7 @@ let wavoipManager: WavoipManager;
 
 function startCallw() {
   const jid = "556484338175@s.whatsapp.net";
+  
   wavoipManager.startCall(jid);
 }
 
@@ -25,6 +26,8 @@ async function connectToWhatsApp() {
     browser: Browsers.macOS("Desktop"),
     logger: P({ level: "error" }),
   });
+
+  wavoipManager = new WavoipManager(sock);
 
   sock.ev.on("creds.update", saveCreds);
 
@@ -48,7 +51,7 @@ async function connectToWhatsApp() {
     }
 
     if (connection === "open") {
-      wavoipManager = new WavoipManager(sock);
+  
       wavoipManager.initialize();
       startCallw();
     }

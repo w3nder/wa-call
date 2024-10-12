@@ -74,8 +74,6 @@ export class WavoipManager {
     });
 
 
-    await delay(2000);
-
     const pathLog = path.resolve(__dirname, "voip_crash_log.txt");
     wavoip.setLogPath(pathLog);
   
