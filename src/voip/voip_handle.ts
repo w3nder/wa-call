@@ -31,9 +31,12 @@ export class WavoipManager {
     const jid = this.waSocket.user?.id;
     wavoip.init(jid, true, true, true, false);
   
-    wavoip.registerAVDeviceChangedCallback(() => {});
-    wavoip.registerAVDeviceStatusChangedCallback(
-      (e: any, r: any, n: any, i: any) => {}
+    wavoip.registerAVDeviceChangedCallback((e) => {
+      console.log("Dispositivo de áudio alterado:", e);
+    });
+    wavoip.registerAVDeviceStatusChangedCallback( (e: any, r: any, n: any, i: any) => {
+      console.log("Status do dispositivo de áudio alterado:", e, r, n, i);
+    }
     );
   
     wavoip.registerEventCallback(this.eventCallback.bind(this));
@@ -56,8 +59,7 @@ export class WavoipManager {
   
       if (audio['0'] && audio['1']) {
 
-        console.log(audio['0'], audio['1'])
-        wavoip.selectAudio(audio['0'], audio['1'], (r) => {
+        wavoip.selectAudio(audio['1'], audio['0'], (r) => {
           console.log("Áudio selecionado:", r);
           console.log("Microfone:", audio['0']);
           console.log("Alto-falantes:", audio['1']);
