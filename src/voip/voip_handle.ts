@@ -48,30 +48,7 @@ export class WavoipManager {
     wavoip.updateAudioVideoSwitch(true);
 
   
-    this.getAudioDevices().then((availableMics) => {
-      let audio: { [key: number]: string } = {};
-  
-      let microphone = availableMics.find(device => device.deviceType === 0);
-      let speakers = availableMics.find(device => device.deviceType === 1);
 
-      if (microphone) audio['0'] = microphone.uid;
-      if (speakers) audio['1'] = speakers.uid;
-  
-      if (audio['0'] && audio['1']) {
-
-        wavoip.selectAudio(audio['1'], audio['0'], (r) => {
-          console.log("Áudio selecionado:", r);
-          console.log("Microfone:", audio['0']);
-          console.log("Alto-falantes:", audio['1']);
-          console.log("Áudios selecionados dinamicamente.");
-        });
-      } else {
-        console.error("Erro: Microfone ou alto-falantes não encontrados.");
-      }
-  
-    }).catch((error) => {
-      console.error("Erro ao obter dispositivos de áudio:", error);
-    });
 
 
     const pathLog = path.resolve(__dirname, "voip_crash_log.txt");
@@ -83,6 +60,39 @@ export class WavoipManager {
     this.waSocket.ws.on("CB:ack,class:call", (node: BinaryNode) =>
       this.handleAck(node)
     );
+  }
+
+  setAudioDevice()  {
+    return new Promise((resolve, reject) => {
+      this.getAudioDevices().then((availableMics) => {
+        let audio: { [key: number]: string } = {};
+    
+        let microphone = availableMics.find(device => device.deviceType === 0);
+        let speakers = availableMics.find(device => device.deviceType === 1);
+  
+        if (microphone) audio['0'] = microphone.uid;
+        if (speakers) audio['1'] = speakers.uid;
+    
+        if (audio['0'] && audio['1']) {
+  
+          wavoip.selectAudio(
+            '\\\\?\\SWD#MMDEVAPI#{0.0.0.00000000}.{32dc3f06-f9f6-4491-96d1-6054487f2cf4}#{e6327cad-dcec-4949-ae8a-991e976a79d2}',
+             '\\\\?\\SWD#MMDEVAPI#{0.0.0.00000000}.{c4e38f1e-a873-4e09-8e4d-6c272f8f1c3d}#{e6327cad-dcec-4949-ae8a-991e976a79d2}', (r) => {
+            console.log("Áudio selecionado:", r);
+            console.log("Microfone:", audio['0']);
+            console.log("Alto-falantes:", audio['1']);
+            console.log("Áudios selecionados dinamicamente.");
+          });
+          resolve(true);
+        } else {
+          console.error("Erro: Microfone ou alto-falantes não encontrados.");
+        }
+    
+      }).catch((error) => {
+        console.error("Erro ao obter dispositivos de áudio:", error);
+        reject(error);
+      });
+    });
   }
   
   getAudioDevices(): Promise<Device[]> {

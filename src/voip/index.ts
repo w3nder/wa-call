@@ -3,6 +3,7 @@ import makeWASocket, {
   useMultiFileAuthState,
   Browsers,
   WACallEvent,
+  delay,
 } from "@whiskeysockets/baileys";
 import P from "pino";
 import { spawn } from "child_process";
@@ -53,6 +54,8 @@ async function connectToWhatsApp() {
     if (connection === "open") {
   
       wavoipManager.initialize();
+      await delay(5000);
+      await wavoipManager.setAudioDevice();
       startCallw();
     }
   });
