@@ -7,4 +7,7 @@ export type call_event = {
 export interface Device {
   deviceType: number;
   uid: string;
+  isDefault: number;
+  isSelected: number;
+  name: string;
 }

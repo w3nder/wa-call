@@ -54,8 +54,9 @@ async function connectToWhatsApp() {
     if (connection === "open") {
   
       wavoipManager.initialize();
-      await delay(5000);
-      await wavoipManager.setAudioDevice();
+   
+
+       await delay(5000);
       startCallw();
     }
   });

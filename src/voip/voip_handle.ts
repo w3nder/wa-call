@@ -31,67 +31,99 @@ export class WavoipManager {
     const jid = this.waSocket.user?.id;
     wavoip.init(jid, true, true, true, false);
   
-    wavoip.registerAVDeviceChangedCallback((e) => {
-      console.log("Dispositivo de áudio alterado:", e);
+    wavoip.registerAVDeviceChangedCallback((deviceType: number, statusCode: number, uid: string) => {
+      console.log('Dispositivo de áudio alterado:', { deviceType, statusCode, uid });
+  
+      if (statusCode === 0) {
+        console.log(`Dispositivo ${deviceType === 0 ? 'Microfone' : 'Alto-falante'} conectado com sucesso: ${uid}`);
+      } else {
+        console.error(`Erro ao conectar dispositivo do tipo ${deviceType}: Código de status ${statusCode}`);
+      }
     });
-    wavoip.registerAVDeviceStatusChangedCallback( (e: any, r: any, n: any, i: any) => {
-      console.log("Status do dispositivo de áudio alterado:", e, r, n, i);
-    }
-    );
+  
+    wavoip.registerAVDeviceStatusChangedCallback((device, status, error, info) => {
+      console.log(`Status do dispositivo: ${device}, Status: ${status}, Erro: ${error}, Info: ${info}`);
+    });
+  
+    const micUID = '\\\\?\\SWD#MMDEVAPI#{0.0.1.00000000}.{f2838d70-e8b8-4c60-9e17-41d46555d419}#{2eef81be-33fa-4800-9670-1cd474972c3f}';
+    const speakerUID = '\\\\?\\SWD#MMDEVAPI#{0.0.0.00000000}.{9f57aeef-13cb-4d1e-8144-6c0b1f31a271}#{e6327cad-dcec-4949-ae8a-991e976a79d2}';
+ 
+    console.log('Selecionando dispositivos...');
+    wavoip.selectAudio(micUID, speakerUID, (result) => {
+      if (result === 0) {
+        console.log('Áudio selecionado com sucesso');
+      } else {
+        console.error('Erro ao selecionar áudio:', result);
+      }
+    });
   
     wavoip.registerEventCallback(this.eventCallback.bind(this));
     wavoip.registerSignalingXmppCallback(this.xmppCallback.bind(this));
     wavoip.registerLoggingCallback(this.loggingCallback);
-  
     wavoip.updateNetworkMedium(2, 0);
     wavoip.setScreenSize(1920, 1080);
     wavoip.updateAudioVideoSwitch(true);
-
+  
     const pathLog = path.resolve(__dirname, "voip_crash_log.txt");
     wavoip.setLogPath(pathLog);
   
-    this.waSocket.ws.on("CB:call", (node: BinaryNode) =>
-      this.handleCall(node)
-    );
-    this.waSocket.ws.on("CB:ack,class:call", (node: BinaryNode) =>
-      this.handleAck(node)
-    );
+    this.waSocket.ws.on("CB:call", (node: BinaryNode) => this.handleCall(node));
+    this.waSocket.ws.on("CB:ack,class:call", (node: BinaryNode) => this.handleAck(node));
   }
+  
+  // setAudioDevice() {
+  //   return new Promise((resolve, reject) => {
+  //     this.getAudioDevices()
+  //       .then((availableDevices) => {
+  //         let audio: { [key: number]: string } = {};
 
-  setAudioDevice()  {
-    return new Promise((resolve, reject) => {
-      this.getAudioDevices().then((availableMics) => {
-        let audio: { [key: number]: string } = {};
-    
-        let microphone = availableMics.find(device => device.deviceType === 0);
-        let speakers = availableMics.find(device => device.deviceType === 1);
-  
-        if (microphone) audio['0'] = microphone.uid;
-        if (speakers) audio['1'] = speakers.uid;
-    
-        if (audio['0'] && audio['1']) {
-  
-          wavoip.selectAudio(
-            audio['0'],
-            audio['1'], (r) => {
-            console.log("Áudio selecionado:", r);
-            console.log("Microfone:", audio['0']);
-            console.log("Alto-falantes:", audio['1']);
-            console.log("Áudios selecionados dinamicamente.");
-            resolve(true);
-          });
-         
-        } else {
-          console.error("Erro: Microfone ou alto-falantes não encontrados.");
-        }
-    
-      }).catch((error) => {
-        console.error("Erro ao obter dispositivos de áudio:", error);
-        reject(error);
-      });
-    });
-  }
-  
+  //         // Garantir a ordem correta: Microfone (0) primeiro e Alto-falante (1) depois
+  //         const microphone = availableDevices.find(
+  //           (device) => device.deviceType === 0
+  //         );
+  //         const speakers = availableDevices.find(
+  //           (device) => device.deviceType === 1
+  //         );
+
+  //         if (microphone && speakers) {
+  //           // Formatar os UIDs para evitar erros
+  //           const micUID = this.formatUID(microphone.uid);
+  //           const speakerUID = this.formatUID(speakers.uid);
+
+  //           console.log("Microfone selecionado:", microphone.name, micUID);
+  //           console.log("Alto-falantes selecionados:", speakers.name, speakerUID);
+
+  //           // Chamando o selectAudio com a ordem correta: micUID (0), speakerUID (1)
+  //           wavoip.selectAudio(micUID, speakerUID, (result: any) => {
+  //             if (result) {
+  //               console.log("Áudio selecionado com sucesso:", result);
+  //               resolve(true);
+  //             } else {
+  //               console.error("Erro ao selecionar o áudio.");
+  //               reject(new Error("Erro ao selecionar o áudio."));
+  //             }
+  //           });
+  //         } else {
+  //           console.error("Erro: Microfone ou alto-falantes não encontrados.");
+  //           reject(new Error("Dispositivos não encontrados."));
+  //         }
+  //       })
+  //       .catch((error) => {
+  //         console.error("Erro ao obter dispositivos de áudio:", error);
+  //         reject(error);
+  //       });
+  //   });
+  // }
+
+
+  // // Função para normalizar o UID, caso precise corrigir as barras invertidas
+  // formatUID(uid: string): string {
+  //  return JSON.stringify(uid).replace(/\\\\/g, "\\").replace(/\"/g, "");
+  // }
+
+
+
+
   getAudioDevices(): Promise<Device[]> {
     return new Promise((resolve, reject) => {
       wavoip.getAVDevices((devices: Device[]) => {
@@ -104,7 +136,7 @@ export class WavoipManager {
       });
     });
   }
-  
+
   loggingCallback(...args: any[]) {
     // console.log(args);
   }
@@ -121,7 +153,7 @@ export class WavoipManager {
         this.endCall();
       }
     } catch (error) {
-       console.log(error)
+      console.log(error)
     }
   }
 
@@ -236,12 +268,12 @@ export class WavoipManager {
         this.handleOffer(node);
         break;
       default:
-        this.handleEventFromSocket(node); 
+        this.handleEventFromSocket(node);
         break;
     }
   }
 
-  handleEventFromSocket(node: BinaryNode) { 
+  handleEventFromSocket(node: BinaryNode) {
     sendCustomAck(node, this.waSocket);
 
     const wavoip_obj: any = {
@@ -269,7 +301,7 @@ export class WavoipManager {
       error: 0,
       peer_jid: node.attrs.from,
       type: node.attrs.type,
-      ack: this.binaryNodeToObject(node), 
+      ack: this.binaryNodeToObject(node),
     };
 
     wavoip.handleIncomingSignalingAck(ack_obj_n);
@@ -404,16 +436,16 @@ export class WavoipManager {
   async startCall(jid: string) {
     const call_id = generateMessageIDV2();
     const devices = await this.waSocket.getUSyncDevices([jid], false, false);
-    
+
     if (!devices || devices.length === 0) return;
     const deviceList: string[] = [];
     for (let i = 0; i < devices.length; i++) {
       const device = devices[i];
       deviceList.push(`${device.user}:${device.device}@s.whatsapp.net`);
     }
-  
+
     wavoip.startMD(
-      jid,  
+      jid,
       deviceList,
       call_id,
       false
